@@ -20,13 +20,14 @@ export const createNewUser = async (req, res, next) => {
   const { name, email, password } = req.body;
   try {
     const newUser = await createNewUserRepo(req.body);
+    // console.log(newUser)
     await sendToken(newUser, res, 200);
 
     // Implement sendWelcomeEmail function to send welcome message
     await sendWelcomeEmail(newUser);
   } catch (err) {
     //  handle error for duplicate email
-    return next(new ErrorHandler(400, err));
+    return next(new ErrorHandler(400, "email already registered"));
   }
 };
 
@@ -48,6 +49,7 @@ export const userLogin = async (req, res, next) => {
     }
     await sendToken(user, res, 200);
   } catch (error) {
+    
     return next(new ErrorHandler(400, error));
   }
 };
@@ -64,9 +66,44 @@ export const logoutUser = async (req, res, next) => {
 
 export const forgetPassword = async (req, res, next) => {
   // Implement feature for forget password
+  const email = req.body.email
+  const user = await findUserRepo({ email }, true);
+  if (!user) {
+    return next(
+      new ErrorHandler(401, "user not found! register yourself now!!")
+    );
+  }
+  await sendPasswordResetEmail(user,await user.getResetPasswordToken())
+  res
+  .status(200)
+  .json({
+    "success":"true",
+    "message":"password reset mail sent successfully"
+  })
 };
 
 export const resetUserPassword = async (req, res, next) => {
+  const token = req.params.token
+  const password = req.body.password
+  const confirmPassword = req.body.comparePassword
+  const user = await findUserForPasswordResetRepo(token)
+  try {
+    if (!user) {
+      return next(
+        new ErrorHandler(401, "token must be expired please check")
+      );
+    }
+    if(password !== confirmPassword){
+      return next(
+        new ErrorHandler(401, "mismatch new password and confirm password!")
+      );
+    }
+    user.password = newPassword;
+    await user.save();
+    await sendToken(user, res, 200);
+  } catch (error) {
+    return next(new ErrorHandler(400, error));
+  }
   // Implement feature for reset password
 };
 
