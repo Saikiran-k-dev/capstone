@@ -31,6 +31,17 @@ export const addNewProduct = async (req, res, next) => {
 
 export const getAllProducts = async (req, res, next) => {
   // Implement the functionality for search, filter and pagination this function.
+  const filter = req.query
+  const products = await getAllProductsRepo(filter)
+  
+  console.log(filter)
+  if(!products){
+    return next(new ErrorHandler(400, "Products not found!"));
+  } else {
+    res.status(200)
+    .send(products)
+  }
+
 };
 
 export const updateProduct = async (req, res, next) => {

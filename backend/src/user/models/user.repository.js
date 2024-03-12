@@ -36,4 +36,8 @@ export const deleteUserRepo = async (_id) => {
 
 export const updateUserRoleAndProfileRepo = async (_id, data) => {
   // Write your code here for updating the roles of other users by admin
+  const user = await UserModel.findById(_id)
+  user.role = data.role
+  user.save()
+  return user
 };
